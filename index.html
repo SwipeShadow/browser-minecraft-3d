@@ -36,7 +36,6 @@
       pointer-events: none;
     }
 
-    /* Crosshair */
     #crosshair {
       position: absolute;
       left: 50%;
@@ -72,7 +71,6 @@
       transform: translateY(-50%);
     }
 
-    /* Hotbar */
     #hotbar {
       position: absolute;
       left: 50%;
@@ -107,7 +105,6 @@
       background: rgba(139, 69, 19, 0.6);
     }
 
-    /* Info Panel */
     #info {
       position: absolute;
       left: 18px;
@@ -130,7 +127,6 @@
       font-size: 14px;
     }
 
-    /* Inventory */
     #inventory {
       position: absolute;
       right: 18px;
@@ -175,18 +171,6 @@
       border-color: rgba(255,255,255,0.4);
     }
 
-    .inventory-slot .count {
-      position: absolute;
-      bottom: -2px;
-      right: -2px;
-      font-size: 10px;
-      background: rgba(0,0,0,0.7);
-      padding: 1px 3px;
-      border-radius: 2px;
-      line-height: 1;
-    }
-
-    /* Health Bar */
     #health {
       position: absolute;
       left: 18px;
@@ -233,76 +217,6 @@
       transition: width 0.2s;
     }
 
-    /* Start Screen */
-    #start {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(9, 12, 16, 0.5);
-      backdrop-filter: blur(3px);
-      color: white;
-      text-align: center;
-      z-index: 100;
-      user-select: none;
-      pointer-events: auto;
-    }
-
-    #start.hidden {
-      display: none;
-      pointer-events: none;
-    }
-
-    #startBox {
-      background: rgba(13, 16, 22, 0.95);
-      border: 2px solid rgba(255,255,255,0.12);
-      border-radius: 16px;
-      padding: 32px 40px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      pointer-events: auto;
-    }
-
-    #start h1 {
-      margin: 0 0 12px;
-      font-size: 48px;
-      letter-spacing: 2px;
-      color: #66d77d;
-      text-shadow: 0 4px 8px rgba(0,0,0,0.5);
-    }
-
-    #start p {
-      margin: 0 0 20px;
-      color: #dfefff;
-      font-size: 16px;
-      line-height: 1.5;
-    }
-
-    #startButton {
-      margin-top: 18px;
-      background: linear-gradient(180deg, #66d77d, #2c9d52);
-      border: none;
-      color: white;
-      font-weight: bold;
-      padding: 12px 24px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 16px;
-      box-shadow: 0 10px 28px rgba(50,170,90,0.35);
-      pointer-events: auto;
-      transition: all 0.2s ease;
-    }
-
-    #startButton:hover {
-      background: linear-gradient(180deg, #7ae68a, #35ac5b);
-      box-shadow: 0 12px 32px rgba(50,170,90,0.45);
-    }
-
-    #startButton:active {
-      transform: scale(0.98);
-    }
-
-    /* Pause Menu */
     #pauseMenu {
       position: absolute;
       inset: 0;
@@ -344,13 +258,13 @@
       cursor: pointer;
       font-size: 14px;
       transition: all 0.2s;
+      pointer-events: auto;
     }
 
     .pause-button:hover {
       background: linear-gradient(180deg, #5a9c69, #3d6a45);
     }
 
-    /* Day/Night Indicator */
     #dayNight {
       position: absolute;
       right: 18px;
@@ -438,24 +352,12 @@
         <button class="pause-button" id="mainMenuBtn">Main Menu</button>
       </div>
     </div>
-
-    <div id="start">
-      <div id="startBox">
-        <h1>VoxelCraft 3D</h1>
-        <p>Full Edition with Survival Mode</p>
-        <p style="font-size: 12px; color: #999;">
-          Explore, Build, Survive
-        </p>
-        <button id="startButton">Create World</button>
-      </div>
-    </div>
   </div>
 
   <script type="module">
     import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js";
     import { PointerLockControls } from "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/controls/PointerLockControls.js";
 
-    // Scene Setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
     camera.position.set(0, 18, 14);
@@ -469,40 +371,36 @@
     const controls = new PointerLockControls(camera, document.body);
     scene.add(controls.getObject());
 
-    // Lighting System
     let dayTime = 0;
+
     function updateLighting() {
       const timeOfDay = (dayTime % 24000) / 24000;
       const sunAngle = timeOfDay * Math.PI * 2;
       const sunHeight = Math.sin(sunAngle) * 50;
       const sunX = Math.cos(sunAngle) * 80;
-      
+
       sun.position.set(sunX, sunHeight, 40);
-      
-      // Sky color transition
+
       const skyColor = new THREE.Color();
       if (timeOfDay < 0.25) {
-        // Sunrise
         skyColor.lerpColors(
           new THREE.Color(0x1a1a2e),
           new THREE.Color(0x87ceeb),
           timeOfDay * 4
         );
       } else if (timeOfDay < 0.75) {
-        // Day
         skyColor.set(0x87ceeb);
       } else {
-        // Sunset
         skyColor.lerpColors(
           new THREE.Color(0x87ceeb),
           new THREE.Color(0x1a1a2e),
           (timeOfDay - 0.75) * 4
         );
       }
-      
+
       scene.background = skyColor;
       scene.fog.color = skyColor;
-      
+
       const intensity = sunHeight > 0 ? Math.max(0.3, sunHeight / 50) : 0.1;
       sun.intensity = intensity;
       ambient.intensity = 0.5 + intensity * 0.7;
@@ -520,7 +418,6 @@
     sun.shadow.camera.bottom = -100;
     scene.add(sun);
 
-    // World Data
     const world = new Map();
     const worldMeshes = new Map();
     const blockGroup = new THREE.Group();
@@ -545,8 +442,7 @@
     const keys = {};
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2(0, 0);
-    
-    // Inventory System
+
     const inventory = {
       items: {},
       selectedSlot: 0,
@@ -572,7 +468,6 @@
       }
     };
 
-    // Initialize inventory
     for (let key of Object.keys(BLOCK_TYPES)) {
       inventory.addItem(key, 64);
     }
@@ -591,7 +486,7 @@
       breakProgress: 0
     };
 
-    let gameRunning = false;
+    let gameRunning = true;
     let gamePaused = false;
 
     function keyFor(x, y, z) {
@@ -620,12 +515,12 @@
       const key = keyFor(x, y, z);
       const mesh = worldMeshes.get(key);
       if (!mesh) return;
-      
+
       const blockType = world.get(key);
       if (blockType && BLOCK_TYPES[blockType].mineable) {
         inventory.addItem(blockType, 1);
       }
-      
+
       blockGroup.remove(mesh);
       world.delete(key);
       worldMeshes.delete(key);
@@ -679,11 +574,10 @@
             else if (y > surfaceY - 6 && rand > 0.92) type = "iron";
             else if (y > surfaceY - 10 && rand > 0.97) type = "gold";
             else if (y > surfaceY - 12 && rand > 0.98) type = "diamond";
-            
+
             addBlock(x, y, z, type);
           }
 
-          // Tree generation
           const treeChance = Math.random();
           if (treeChance > 0.98 && surfaceY > 2) {
             const trunkHeight = 4 + Math.floor(Math.random() * 3);
@@ -713,7 +607,7 @@
     function updatePlayer(dt) {
       const isSprinting = keys["ShiftLeft"] && player.hunger > 2;
       const speed = isSprinting ? player.sprintSpeed : player.speed;
-      
+
       if (keys["KeyW"]) controls.moveForward(speed * dt);
       if (keys["KeyS"]) controls.moveForward(-speed * dt);
       if (keys["KeyA"]) controls.moveRight(-speed * dt);
@@ -742,7 +636,6 @@
         player.onGround = false;
       }
 
-      // Hunger decay
       if (isSprinting) {
         player.hunger -= 0.001;
       } else {
@@ -750,12 +643,10 @@
       }
       player.hunger = Math.max(0, player.hunger);
 
-      // Health regeneration when hunger high
       if (player.hunger > 15 && player.health < player.maxHealth) {
         player.health += 0.001;
       }
 
-      // Damage from starvation
       if (player.hunger <= 0 && player.health > 0.5) {
         player.health -= 0.01;
       }
@@ -780,14 +671,12 @@
       const blockType = world.get(keyFor(x, y, z));
 
       if (event.button === 0) {
-        // Left click - break block
         const blockData = BLOCK_TYPES[blockType];
         if (blockData && blockData.mineable) {
           removeBlock(x, y, z);
           player.hunger -= 0.05;
         }
       } else if (event.button === 2) {
-        // Right click - place block
         const normal = hit.face.normal.clone();
         normal.applyQuaternion(hit.object.quaternion);
 
@@ -803,17 +692,12 @@
     }
 
     function updateUI() {
-      // Health bar
       document.querySelector(".health-fill").style.width = (player.health / player.maxHealth) * 100 + "%";
-      
-      // Hunger bar
       document.querySelector(".hunger-fill").style.width = (player.hunger / player.maxHunger) * 100 + "%";
-      
-      // Time bar
+
       const timeProgress = (dayTime % 24000) / 24000;
       document.querySelector(".time-fill").style.width = (timeProgress * 100) + "%";
-      
-      // Hotbar display
+
       const blocks = Object.keys(BLOCK_TYPES);
       document.querySelectorAll(".hotbar-slot").forEach((slot, i) => {
         if (i < blocks.length) {
@@ -827,25 +711,16 @@
       });
     }
 
-    function startGame() {
-      document.getElementById("start").classList.add("hidden");
-      gameRunning = true;
-      controls.lock();
-    }
-
     function pauseGame() {
       gamePaused = !gamePaused;
       document.getElementById("pauseMenu").classList.toggle("open");
     }
 
-    // Event Listeners
-    document.getElementById("startButton").addEventListener("click", startGame);
     document.getElementById("resumeBtn").addEventListener("click", pauseGame);
     document.getElementById("mainMenuBtn").addEventListener("click", () => {
       location.reload();
     });
 
-    // Hotbar switching
     document.querySelectorAll(".hotbar-slot").forEach((slot, i) => {
       slot.addEventListener("click", () => {
         inventory.setSelectedSlot(i);
@@ -855,18 +730,17 @@
 
     document.addEventListener("keydown", (e) => {
       keys[e.code] = true;
-      
+
       if (e.code === "KeyE") {
         document.getElementById("inventory").classList.toggle("open");
       }
-      
+
       if (e.code === "Escape") {
         if (gameRunning && document.pointerLockElement === document.body) {
           pauseGame();
         }
       }
 
-      // Number keys for hotbar
       const num = parseInt(e.key);
       if (num >= 1 && num <= 9) {
         inventory.setSelectedSlot(num - 1);
@@ -897,6 +771,7 @@
     });
 
     generateWorld();
+    controls.lock();
 
     let lastTime = performance.now();
     function animate() {
@@ -907,7 +782,7 @@
       lastTime = now;
 
       if (gameRunning && !gamePaused) {
-        dayTime += dt * 10; // Speed up day cycle
+        dayTime += dt * 10;
         updateLighting();
         updatePlayer(dt);
       }
