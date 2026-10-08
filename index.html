@@ -219,6 +219,9 @@
     };
 
     const selectedBlockType = "dirt";
+    const keys = {};
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2(0, 0);
 
     const player = {
       speed: 6.5,
@@ -227,13 +230,8 @@
       onGround: false
     };
 
-    const keys = {};
-    const raycaster = new THREE.Raycaster();
-    const pointer = new THREE.Vector2(0, 0);
-
     const startOverlay = document.getElementById("start");
     const startButton = document.getElementById("startButton");
-
     let gameRunning = false;
 
     function keyFor(x, y, z) {
@@ -245,7 +243,6 @@
       if (world.has(key)) return;
 
       const color = BLOCK_TYPES[type] ?? BLOCK_TYPES.grass;
-
       const mesh = new THREE.Mesh(
         new THREE.BoxGeometry(1, 1, 1),
         new THREE.MeshLambertMaterial({ color })
@@ -253,7 +250,6 @@
       mesh.position.set(x + 0.5, y + 0.5, z + 0.5);
       mesh.userData = { x, y, z, type };
       blockGroup.add(mesh);
-
       world.set(key, type);
       worldMeshes.set(key, mesh);
     }
@@ -346,7 +342,6 @@
       if (keys["KeyD"]) controls.moveRight(player.speed * dt);
 
       const oldPos = camera.position.clone();
-
       if (collidesAt(camera.position)) {
         camera.position.copy(oldPos);
       }
@@ -358,7 +353,6 @@
 
       player.velocityY -= player.gravity * dt;
       const nextY = camera.position.y + player.velocityY * dt;
-
       const oldY = camera.position.y;
       camera.position.y = nextY;
 
@@ -371,31 +365,39 @@
       }
     }
 
-    function handleBlockInteraction() {
-      raycaster.setFromCamera(pointer, camera);
-      const intersects = raycaster.intersectObjects(blockGroup.children);
-
-      if (intersects.length > 0) {
-        const hit = intersects[0];
-        const { x, y, z } = hit.object.userData;
-
-        const normal = hit.face.normal.clone();
-        normal.applyQuaternion(hit.object.quaternion);
-
-        const placeX = x + Math.round(normal.x);
-        const placeY = y + Math.round(normal.y);
-        const placeZ = z + Math.round(normal.z);
-
-        if (canPlaceAt(placeX, placeY, placeZ)) {
-          addBlock(placeX, placeY, placeZ, selectedBlockType);
-        }
-      }
-    }
-
     function startGame() {
       startOverlay.classList.add("hidden");
       gameRunning = true;
       controls.lock();
+    }
+
+    function handleBreakOrPlace(event) {
+      if (!gameRunning || document.pointerLockElement !== document.body) return;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, camera);
+      const intersects = raycaster.intersectObjects(blockGroup.children, false);
+
+      if (intersects.length === 0) return;
+
+      const hit = intersects[0];
+      const { x, y, z } = hit.object.userData;
+      const normal = hit.face.normal.clone();
+      normal.applyQuaternion(hit.object.quaternion);
+
+      if (event.button === 0) {
+        removeBlock(x, y, z);
+      } else if (event.button === 2) {
+        const placeX = x + Math.round(normal.x);
+        const placeY = y + Math.round(normal.y);
+        const placeZ = z + Math.round(normal.z);
+        if (canPlaceAt(placeX, placeY, placeZ)) {
+          addBlock(placeX, placeY, placeZ, selectedBlockType);
+        }
+      }
     }
 
     startButton.addEventListener("click", startGame);
@@ -408,22 +410,16 @@
       keys[e.code] = false;
     });
 
-    document.addEventListener("click", (e) => {
-      if (gameRunning) {
-        pointer.set(0, 0);
-        handleBlockInteraction();
+    document.addEventListener("mousedown", (event) => {
+      if (!gameRunning) return;
+      if (event.button === 0 || event.button === 2) {
+        event.preventDefault();
+        handleBreakOrPlace(event);
       }
     });
 
-    document.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-    });
-
-    document.addEventListener("mousedown", (e) => {
-      if (e.button === 2 && gameRunning) {
-        pointer.set(0, 0);
-        handleBlockInteraction();
-      }
+    document.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
     });
 
     window.addEventListener("resize", () => {
@@ -435,7 +431,6 @@
     generateWorld();
 
     let lastTime = performance.now();
-
     function animate() {
       requestAnimationFrame(animate);
 
